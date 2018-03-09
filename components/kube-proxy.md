@@ -47,6 +47,12 @@ TCP  10.111.21.136:80 rr persistent 10800
   -> 192.168.23.134:80            Masq    1      0          0
 ```
 
+## How it works
+
+kube-proxy监听API server中service和endpoint的变化情况，并通过userspace、iptables、ipvs或winuserspace等proxier来为服务配置负载均衡（仅支持TCP和UDP）。
+
+![](images/kube-proxy.png)
+
 ## 启动kube-proxy示例
 
 ```sh

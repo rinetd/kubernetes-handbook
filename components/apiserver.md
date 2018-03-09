@@ -49,6 +49,12 @@ Kubernetes API的每个请求都会经过多阶段的访问控制之后才会被
 
 更多准入控制模块的使用方法可以参考[Kubernetes准入控制](../plugins/admission.md)。
 
+## How it works
+
+kube-apiserver提供了Kubernetes的REST API，实现了认证、授权、准入控制等安全校验功能，同时也负责集群状态的存储操作（通过etcd）。
+
+![](images/kube-apiserver.png)
+
 ## 启动apiserver示例
 
 ```sh

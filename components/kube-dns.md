@@ -82,8 +82,23 @@ Kubernetes v1.10 也支持 Beta 版的 CoreDNS，其性能较 kube-dns 更好。
 kubectl apply -f https://kubernetes.feisky.xyz/manifests/kubedns/coredns.yaml
 ```
 
+## How it works
+
+
+如下图所示，kube-dns由三个容器构成：
+
+- kube-dns：DNS服务的核心组件，主要由KubeDNS和SkyDNS组成
+  - KubeDNS负责监听Service和Endpoint的变化情况，并将相关的信息更新到SkyDNS中
+  - SkyDNS负责DNS解析，监听在10053端口(tcp/udp)，同时也监听在10055端口提供metrics
+  - kube-dns还监听了8081端口，以供健康检查使用
+- dnsmasq-nanny：负责启动dnsmasq，并在配置发生变化时重启dnsmasq
+  - dnsmasq的upstream为SkyDNS，即集群内部的DNS解析由SkyDNS负责
+- sidecar：负责健康检查和提供DNS metrics（监听在10054端口）
+
+![](images/kube-dns.png)
+
+
 ## 参考文档
 
 - [dns-pod-service 介绍](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)
 - [coredns/coredns](https://github.com/coredns/coredns)
-

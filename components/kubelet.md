@@ -27,7 +27,7 @@ Kubelet以PodSpec的方式工作。PodSpec是描述一个Pod的YAML或JSON对象
 
 Kubelet通过API Server Client(Kubelet启动时创建)使用Watch加List的方式监听"/registry/nodes/$当前节点名"和“/registry/pods”目录，将获取的信息同步到本地缓存中。
 
-Kubelet监听etcd，所有针对Pod的操作都将会被Kubelet监听到。如果发现有新的绑定到本节点的Pod，则按照Pod清单的要求创建该Pod。 
+Kubelet监听etcd，所有针对Pod的操作都将会被Kubelet监听到。如果发现有新的绑定到本节点的Pod，则按照Pod清单的要求创建该Pod。
 
 如果发现本地的Pod被修改，则Kubelet会做出相应的修改，比如删除Pod中某个容器时，则通过Docker Client删除该容器。
 如果发现删除本节点的Pod，则删除相应的Pod，并通过Docker Client删除Pod中的容器。
@@ -38,7 +38,7 @@ Kubelet读取监听到的信息，如果是创建和修改Pod任务，则执行�
 - 从API Server读取该Pod清单；
 - 为该Pod挂载外部卷；
 - 下载Pod用到的Secret；
-- 检查已经在节点上运行的Pod，如果该Pod没有容器或Pause容器没有启动，则先停止Pod里所有容器的进程。如果在Pod中有需要删除的容器，则删除这些容器；  
+- 检查已经在节点上运行的Pod，如果该Pod没有容器或Pause容器没有启动，则先停止Pod里所有容器的进程。如果在Pod中有需要删除的容器，则删除这些容器；
 - 用“kubernetes/pause”镜像为每个Pod创建一个容器。Pause容器用于接管Pod中所有其他容器的网络。每创建一个新的Pod，Kubelet都会先创建一个Pause容器，然后创建其他容器。
 - 为Pod中的每个容器做如下处理：
   1. 为容器计算一个hash值，然后用容器的名字去Docker查询对应容器的hash值。若查找到容器，且两者hash值不同，则停止Docker中容器的进程，并停止与之关联的Pause容器的进程；若两者相同，则不做任何处理；
@@ -66,10 +66,73 @@ LivenessProbe探针包含在Pod定义的spec.containers.{某个容器}中。
 
 ## cAdvisor资源监控
 
-Kubernetes集群中，应用程序的执行情况可以在不同的级别上监测到，这些级别包括：容器、Pod、Service和整个集群。  
-Heapster项目为Kubernetes提供了一个基本的监控平台，它是集群级别的监控和事件数据集成器(Aggregator)。Heapster以Pod的方式运行在集群中，Heapster通过Kubelet发现所有运行在集群中的节点，并查看来自这些节点的资源使用情况。Kubelet通过cAdvisor获取其所在节点及容器的数据。Heapster通过带着关联标签的Pod分组这些信息，这些数据将被推到一个可配置的后端，用于存储和可视化展示。支持的后端包括InfluxDB(使用Grafana实现可视化)和Google Cloud Monitoring。  
-cAdvisor是一个开源的分析容器资源使用率和性能特性的代理工具，已集成到Kubernetes代码中。cAdvisor自动查找所有在其所在节点上的容器，自动采集CPU、内存、文件系统和网络使用的统计信息。cAdvisor通过它所在节点机的Root容器，采集并分析该节点机的全面使用情况。  
+Kubernetes集群中，应用程序的执行情况可以在不同的级别上监测到，这些级别包括：容器、Pod、Service和整个集群。
+Heapster项目为Kubernetes提供了一个基本的监控平台，它是集群级别的监控和事件数据集成器(Aggregator)。Heapster以Pod的方式运行在集群中，Heapster通过Kubelet发现所有运行在集群中的节点，并查看来自这些节点的资源使用情况。Kubelet通过cAdvisor获取其所在节点及容器的数据。Heapster通过带着关联标签的Pod分组这些信息，这些数据将被推到一个可配置的后端，用于存储和可视化展示。支持的后端包括InfluxDB(使用Grafana实现可视化)和Google Cloud Monitoring。
+cAdvisor是一个开源的分析容器资源使用率和性能特性的代理工具，已集成到Kubernetes代码中。cAdvisor自动查找所有在其所在节点上的容器，自动采集CPU、内存、文件系统和网络使用的统计信息。cAdvisor通过它所在节点机的Root容器，采集并分析该节点机的全面使用情况。
 cAdvisor通过其所在节点机的4194端口暴露一个简单的UI。
+
+## Container Runtime
+
+容器运行时（Container Runtime）是Kubernetes最重要的组件之一，负责真正管理镜像和容器的生命周期。Kubelet通过[Container Runtime Interface (CRI)](../plugins/CRI.md)与容器运行时交互，以管理镜像和容器。
+
+### CRI
+
+Container Runtime Interface (CRI)是Kubelet 1.5/1.6中主要负责的一块项目，它重新定义了Kubelet Container Runtime API，将原来完全面向Pod级别的API拆分成面向Sandbox和Container的API，并分离镜像管理和容器引擎到不同的服务。
+
+![](images/cri.png)
+
+### Docker
+
+Docker runtime的核心代码在kubelet内部（`pkg/kubelet/dockershim`），是最稳定和特性支持最全的Runtime。
+
+开源电子书[《Docker从入门到实践》](https://yeasy.gitbooks.io/docker_practice/)是docker入门和实践不错的参考。
+
+### Runc
+
+Runc有两个实现，cri-o和cri-containerd
+
+- [cri-containerd](https://github.com/kubernetes-incubator/cri-containerd)，已支持 Kubernetes v1.7 及以上版本
+- [cri-o](https://github.com/kubernetes-incubator/cri-o)，已支持Kubernetes v1.6 及以上版本
+
+### Hyper
+
+[Hyper](http://hypercontainer.io)是一个基于Hypervisor的容器运行时，为Kubernetes带来了强隔离，适用于多租户和运行不可信容器的场景。
+
+Hyper在Kubernetes的集成项目为frakti，<https://github.com/kubernetes/frakti>，目前已支持Kubernetes v1.6 及以上版本。
+
+### Rkt
+
+rkt是另一个集成在kubelet内部的容器运行时，但也正在迁往CRI的路上，<https://github.com/kubernetes-incubator/rktlet>。
+
+
+## How it works
+
+如下kubelet内部组件结构图所示，Kubelet由许多内部组件构成
+
+- Kubelet API，包括10250端口的认证API、4194端口的cAdvisor API、10255端口的只读API以及10248端口的健康检查API
+- syncLoop：从API或者manifest目录接收Pod更新，发送到podWorkers处理，大量使用channel处理来处理异步请求
+- 辅助的manager，如cAdvisor、PLEG、Volume Manager等，处理syncLoop以外的其他工作
+- CRI：容器执行引擎接口，负责与container runtime shim通信
+- 容器执行引擎，如dockershim、rkt等（注：rkt暂未完成CRI的迁移）
+- 网络插件，目前支持CNI和kubenet
+
+![](images/kubelet.png)
+
+### Pod启动流程
+
+![](images/Pod启动过程.png)
+
+### 查询 Node 汇总指标
+
+通过 Kubelet 的 10255 端口可以查询 Node 的汇总指标。有两种访问方式
+
+- 在集群内部可以直接访问 kubelet 的 10255 端口，比如 `http://<node-name>:10255/stats/summary`
+- 在集群外部可以借助 `kubectl proxy` 来访问，比如
+
+```sh
+kubectl proxy&
+curl http://localhost:8001/api/v1/proxy/nodes/<node-name>:10255/stats/summary
+```
 
 ## 启动kubelet示例
 
