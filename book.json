@@ -43,16 +43,7 @@
         },
         "versions": {
             "gitbookConfigURL": "https://raw.githubusercontent.com/feiskyer/kubernetes-handbook/master/book.json",
-            "options": [
-                {
-                    "value": "https://kubernetes.feisky.xyz/",
-                    "text": "中文"
-                },
-                {
-                    "value": "https://k8s.feisky.xyz/",
-                    "text": "English"
-                }
-            ]
+            "type": "branches"
         }
     },
     "generator": "site"
