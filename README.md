@@ -14,13 +14,14 @@ This handbook aims to provide a detailed guide of running and understanding both
 
 ## Reading
 
-- [GitBook](https://kubernetes.feisky.xyz/)
-- [Github](https://github.com/feiskyer/kubernetes-handbook/blob/master/SUMMARY.md)
+- [GitBook](https://k8s.feisky.xyz/)
+- [Github](https://github.com/feiskyer/kubernetes-handbook/blob/en/SUMMARY.md)
 
 ## Source Code
 
-The source code of this handbook is on [https://github.com/feiskyer/kubernetes-handbook](https://github.com/feiskyer/kubernetes-handbook).
+The source code of this handbook is on [https://github.com/feiskyer/kubernetes-handbook](https://github.com/feiskyer/kubernetes-handbook/tree/en).
 
 ## Contributing
 
-Any kinds of contributing are welcomed. Please send PRs or open issues on Github <https://github.com/feiskyer/kubernetes-handbook>.
+Any kinds of contributing are welcomed. Please send PRs or open issues on Github [https://github.com/feiskyer/kubernetes-handbook](https://github.com/feiskyer/kubernetes-handbook/tree/en).
+
